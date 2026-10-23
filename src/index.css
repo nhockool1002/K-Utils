@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0c0e13;
+  --bg-soft: #11141b;
+  --panel: rgba(255, 255, 255, 0.045);
+  --panel-strong: rgba(255, 255, 255, 0.07);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --text: rgba(255, 255, 255, 0.92);
+  --text-muted: rgba(255, 255, 255, 0.52);
+  --text-faint: rgba(255, 255, 255, 0.32);
+  --accent: #7c6cf0;
+  --accent-strong: #9583ff;
+  --accent-soft: rgba(124, 108, 240, 0.16);
+  --success: #34d399;
+  --danger: #f87171;
+  --warning: #fbbf24;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Text",
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+}
+
+input,
+textarea {
+  user-select: text;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.app-shell {
+  background:
+    radial-gradient(1100px 500px at 12% -10%, rgba(124, 108, 240, 0.16), transparent 55%),
+    radial-gradient(900px 500px at 110% 10%, rgba(52, 211, 153, 0.08), transparent 50%),
+    var(--bg);
+}
+
+.titlebar-drag {
+  -webkit-app-region: drag;
+}
+.titlebar-drag button,
+.titlebar-drag input,
+.titlebar-drag select {
+  -webkit-app-region: no-drag;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.panel-strong {
+  background: var(--panel-strong);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+}
+
+.modal-surface {
+  background: #14161d;
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  box-shadow:
+    0 24px 60px -12px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+
+.btn-accent {
+  background: linear-gradient(180deg, var(--accent-strong), var(--accent));
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 6px 16px -6px rgba(124, 108, 240, 0.55);
+}
+.btn-accent:active {
+  filter: brightness(0.94);
+}
+.btn-accent:disabled {
+  opacity: 0.45;
+  filter: grayscale(0.3);
+  box-shadow: none;
+}
+
+.nav-item {
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.fade-in {
+  animation: fadeIn 0.18s ease both;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.progress-track {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.progress-fill {
+  background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+  transition: width 0.25s ease;
+}
+
+.dropzone {
+  border: 1.5px dashed var(--border-strong);
+  border-radius: 18px;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+.dropzone.drag-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
