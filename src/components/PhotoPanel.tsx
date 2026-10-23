@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import clsx from "clsx";
 import { DropZone } from "./DropZone";
 import { BeforeAfterSlider } from "./BeforeAfterSlider";
 import { Field, Slider, Button, IconButton, Badge } from "./ui";
@@ -14,6 +15,8 @@ import {
   SpinnerIcon,
   GaugeIcon,
   PaletteIcon,
+  PanelRightIcon,
+  CheckIcon,
 } from "./icons";
 import {
   pickImageFiles,
@@ -83,6 +86,7 @@ export function PhotoPanel() {
 
   const [queue, setQueue] = useState<PhotoQueueItem[]>([]);
   const [applying, setApplying] = useState(false);
+  const [controlsOpen, setControlsOpen] = useState(true);
 
   useEffect(() => {
     listPhotoPresets().then(setPresets).catch(() => {});
@@ -234,153 +238,224 @@ export function PhotoPanel() {
   const beforeSrc = selectedPath ? originalPreviews[selectedPath] : null;
 
   return (
-    <div className="fade-in flex h-full flex-col gap-4 overflow-y-auto px-7 py-6">
-      <div>
-        <h1 className="text-[18px] font-semibold tracking-tight">Chỉnh ảnh</h1>
-        <p className="mt-0.5 text-[12.5px] text-[var(--text-muted)]">
-          Áp bộ lọc màu — phim nhựa, vintage, cổ điển, đen trắng… — với thanh
-          điều chỉnh chi tiết và so sánh trực quan trước/sau.
-        </p>
-      </div>
-
-      <DropZone
-        onFiles={addFiles}
-        onBrowse={browse}
-        label="Kéo thả ảnh vào đây"
-        sublabel="Hỗ trợ JPG, PNG, HEIC — có thể chọn nhiều ảnh để xử lý hàng loạt"
-        extensions={IMAGE_EXTS}
-        icon={<ImageIcon size={14} className="shrink-0 text-[var(--accent-strong)]" />}
-      />
-
-      {pending.length > 0 && (
-        <div className="panel fade-in flex shrink-0 flex-col divide-y divide-[var(--border)] overflow-hidden">
-          {pending.map((img) => (
-            <div
-              key={img.path}
-              role="button"
-              tabIndex={0}
-              onClick={() => setSelectedPath(img.path)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") setSelectedPath(img.path);
-              }}
-              className={`flex items-center gap-3 px-4 py-2.5 text-[13px] text-left cursor-pointer ${
-                selectedPath === img.path ? "bg-white/[0.06]" : "hover:bg-white/[0.03]"
-              }`}
-            >
-              <ImageIcon size={15} className="shrink-0 text-[var(--text-muted)]" />
-              <span className="flex-1 truncate">{img.name}</span>
-              <span onClick={(e) => e.stopPropagation()}>
-                <IconButton
-                  size="sm"
-                  variant="ghost"
-                  icon={<XIcon size={13} />}
-                  tooltip="Xoá khỏi danh sách"
-                  onClick={() => removePending(img.path)}
-                />
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {selectedPath && (
-        <div className="panel p-3">
-          <BeforeAfterSlider
-            beforeSrc={beforeSrc ?? ""}
-            afterSrc={gradedPreview}
-            afterLoading={gradedLoading}
+    <div className="fade-in flex h-full overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto px-7 py-6">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-[18px] font-semibold tracking-tight">Chỉnh ảnh</h1>
+            <p className="mt-0.5 text-[12.5px] text-[var(--text-muted)]">
+              Áp bộ lọc màu — phim nhựa, vintage, cổ điển, đen trắng… — với so
+              sánh trực quan trước/sau.
+            </p>
+          </div>
+          <IconButton
+            icon={<PanelRightIcon size={16} />}
+            tooltip={controlsOpen ? "Ẩn bảng điều chỉnh" : "Hiện bảng điều chỉnh"}
+            variant={controlsOpen ? "accent" : "default"}
+            onClick={() => setControlsOpen((v) => !v)}
           />
         </div>
-      )}
 
-      <div className="panel flex flex-col gap-3 p-4">
-        <div className="flex items-center justify-between">
-          <span className="text-[13px] font-semibold">Bộ lọc dựng sẵn</span>
-          <Button variant="ghost" icon={<UploadIcon size={13} />} onClick={importLightroom}>
-            Nạp preset Lightroom (.xmp)
-          </Button>
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => setActiveCategory(cat)}
-              className={`rounded-full px-2.5 py-1 text-[11.5px] font-medium cursor-pointer ${
-                activeCategory === cat
-                  ? "bg-[var(--accent)] text-white"
-                  : "bg-white/[0.05] text-[var(--text-muted)] hover:bg-white/[0.09]"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-        <div className="flex max-h-[180px] flex-wrap gap-1.5 overflow-y-auto">
-          {visiblePresets.map((preset) => (
-            <button
-              key={preset.id}
-              type="button"
-              onClick={() => applyPreset(preset)}
-              className={`rounded-[8px] border px-2.5 py-1.5 text-[12px] font-medium cursor-pointer ${
-                activePresetId === preset.id
-                  ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]"
-                  : "border-[var(--border)] bg-white/[0.03] text-[var(--text-muted)] hover:bg-white/[0.07]"
-              }`}
-            >
-              {preset.name}
-            </button>
-          ))}
+        <DropZone
+          onFiles={addFiles}
+          onBrowse={browse}
+          label="Kéo thả ảnh vào đây"
+          sublabel="Hỗ trợ JPG, PNG, HEIC — có thể chọn nhiều ảnh để xử lý hàng loạt"
+          extensions={IMAGE_EXTS}
+          icon={<ImageIcon size={14} className="shrink-0 text-[var(--accent-strong)]" />}
+        />
+
+        {pending.length > 0 && (
+          <div className="panel fade-in flex shrink-0 flex-col divide-y divide-[var(--border)] overflow-hidden">
+            {pending.map((img) => (
+              <div
+                key={img.path}
+                role="button"
+                tabIndex={0}
+                onClick={() => setSelectedPath(img.path)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") setSelectedPath(img.path);
+                }}
+                className={`flex items-center gap-3 px-4 py-2.5 text-[13px] text-left cursor-pointer ${
+                  selectedPath === img.path ? "bg-white/[0.06]" : "hover:bg-white/[0.03]"
+                }`}
+              >
+                <ImageIcon size={15} className="shrink-0 text-[var(--text-muted)]" />
+                <span className="flex-1 truncate">{img.name}</span>
+                <span onClick={(e) => e.stopPropagation()}>
+                  <IconButton
+                    size="sm"
+                    variant="ghost"
+                    icon={<XIcon size={13} />}
+                    tooltip="Xoá khỏi danh sách"
+                    onClick={() => removePending(img.path)}
+                  />
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {selectedPath && (
+          <div className="panel p-3">
+            <BeforeAfterSlider
+              beforeSrc={beforeSrc ?? ""}
+              afterSrc={gradedPreview}
+              afterLoading={gradedLoading}
+            />
+          </div>
+        )}
+
+        <div className="panel flex flex-col gap-3 p-4">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[13px] font-semibold">Bộ lọc dựng sẵn</span>
+            <Button variant="ghost" icon={<UploadIcon size={13} />} onClick={importLightroom}>
+              Nạp Lightroom (.xmp)
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setActiveCategory(cat)}
+                className={`rounded-full px-2.5 py-1 text-[11.5px] font-medium cursor-pointer ${
+                  activeCategory === cat
+                    ? "bg-[var(--accent)] text-white"
+                    : "bg-white/[0.05] text-[var(--text-muted)] hover:bg-white/[0.09]"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
           {activePresetId === "lightroom" && (
-            <Badge tone="accent">Tuỳ chỉnh (từ Lightroom)</Badge>
+            <Badge tone="accent">Đang dùng: Tuỳ chỉnh (từ Lightroom)</Badge>
+          )}
+          <div className="grid max-h-[320px] grid-cols-[repeat(auto-fill,minmax(118px,1fr))] gap-2 overflow-y-auto pr-1">
+            {visiblePresets.map((preset) => {
+              const selected = activePresetId === preset.id;
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => applyPreset(preset)}
+                  className={clsx(
+                    "relative flex flex-col items-center justify-center gap-0.5 rounded-[10px] border px-2 py-3 text-center text-[11.5px] font-medium leading-tight cursor-pointer transition-colors",
+                    selected
+                      ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]"
+                      : "border-[var(--border)] bg-white/[0.03] text-[var(--text-muted)] hover:bg-white/[0.07] hover:text-[var(--text)]",
+                  )}
+                >
+                  {selected && (
+                    <CheckIcon
+                      size={11}
+                      className="absolute right-1.5 top-1.5 text-[var(--accent-strong)]"
+                    />
+                  )}
+                  {preset.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="panel flex flex-col gap-3 p-4">
+          <Field label="Thư mục lưu" icon={<FolderOpenIcon size={13} />}>
+            <div className="flex items-center gap-2">
+              <IconButton
+                icon={<FolderOpenIcon size={15} />}
+                tooltip="Chọn thư mục lưu"
+                onClick={chooseOutputDir}
+              />
+              <span className="min-w-0 flex-1 truncate text-[11.5px] text-[var(--text-faint)]">
+                {outputDir ?? "Mặc định: cùng thư mục với ảnh gốc"}
+              </span>
+            </div>
+          </Field>
+
+          <div className="flex items-center justify-between">
+            <div className="text-[12.5px] text-[var(--text-muted)]">
+              {pending.length > 0 && <Badge tone="accent">{pending.length} ảnh đã chọn</Badge>}
+            </div>
+            <Button
+              variant="accent"
+              icon={<QueueIcon size={14} />}
+              disabled={!pending.length || applying}
+              onClick={applyToAll}
+            >
+              {applying ? "Đang xử lý…" : "Áp dụng & Xuất ảnh"}
+            </Button>
+          </div>
+
+          {queue.length > 0 && (
+            <div className="flex flex-col gap-1.5 border-t border-[var(--border)] pt-3">
+              {queue.map((item) => (
+                <div key={item.id} className="flex items-center gap-2 text-[12.5px]">
+                  {item.status === "running" && <SpinnerIcon size={14} className="text-[var(--accent-strong)]" />}
+                  {item.status === "queued" && <span className="h-3.5 w-3.5 rounded-full bg-white/10" />}
+                  {item.status === "done" && <CheckCircleIcon size={14} className="text-[var(--success)]" />}
+                  {item.status === "error" && <AlertIcon size={14} className="text-[var(--danger)]" />}
+                  <span className="flex-1 truncate text-[var(--text-muted)]">{item.inputName}</span>
+                  {item.status === "error" && (
+                    <span className="truncate text-[11px] text-[var(--danger)]">{item.errorMessage}</span>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
 
-      <div className="panel flex flex-col gap-4 p-4">
-        <div className="flex items-center justify-between">
-          <span className="text-[13px] font-semibold">Điều chỉnh chi tiết</span>
-          <Button variant="ghost" icon={<WandIcon size={13} />} onClick={resetParams}>
-            Đặt lại
-          </Button>
-        </div>
+      <div
+        className={clsx(
+          "shrink-0 overflow-hidden border-l border-[var(--border)] transition-[width] duration-200",
+          controlsOpen ? "w-[320px]" : "w-0",
+        )}
+      >
+        <div className="flex h-full w-[320px] flex-col gap-4 overflow-y-auto px-5 py-6">
+          <div className="flex items-center justify-between">
+            <span className="text-[13px] font-semibold">Điều chỉnh chi tiết</span>
+            <Button variant="ghost" icon={<WandIcon size={13} />} onClick={resetParams}>
+              Đặt lại
+            </Button>
+          </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Nhiệt độ màu">
-            <Slider value={params.temperature} min={-100} max={100} onChange={(v) => updateParam("temperature", v)} />
-          </Field>
-          <Field label="Tint">
-            <Slider value={params.tint} min={-100} max={100} onChange={(v) => updateParam("tint", v)} />
-          </Field>
-          <Field label="Phơi sáng">
-            <Slider value={params.exposure} min={-100} max={100} onChange={(v) => updateParam("exposure", v)} />
-          </Field>
-          <Field label="Tương phản">
-            <Slider value={params.contrast} min={-100} max={100} onChange={(v) => updateParam("contrast", v)} />
-          </Field>
-          <Field label="Highlights">
-            <Slider value={params.highlights} min={-100} max={100} onChange={(v) => updateParam("highlights", v)} />
-          </Field>
-          <Field label="Shadows">
-            <Slider value={params.shadows} min={-100} max={100} onChange={(v) => updateParam("shadows", v)} />
-          </Field>
-          <Field label="Whites">
-            <Slider value={params.whites} min={-100} max={100} onChange={(v) => updateParam("whites", v)} />
-          </Field>
-          <Field label="Blacks">
-            <Slider value={params.blacks} min={-100} max={100} onChange={(v) => updateParam("blacks", v)} />
-          </Field>
-          <Field label="Vibrance" icon={<PaletteIcon size={13} />}>
-            <Slider value={params.vibrance} min={-100} max={100} onChange={(v) => updateParam("vibrance", v)} />
-          </Field>
-          <Field label="Saturation" icon={<PaletteIcon size={13} />}>
-            <Slider value={params.saturation} min={-100} max={100} onChange={(v) => updateParam("saturation", v)} />
-          </Field>
-        </div>
+          <div className="flex flex-col gap-4">
+            <Field label="Nhiệt độ màu">
+              <Slider value={params.temperature} min={-100} max={100} onChange={(v) => updateParam("temperature", v)} />
+            </Field>
+            <Field label="Tint">
+              <Slider value={params.tint} min={-100} max={100} onChange={(v) => updateParam("tint", v)} />
+            </Field>
+            <Field label="Phơi sáng">
+              <Slider value={params.exposure} min={-100} max={100} onChange={(v) => updateParam("exposure", v)} />
+            </Field>
+            <Field label="Tương phản">
+              <Slider value={params.contrast} min={-100} max={100} onChange={(v) => updateParam("contrast", v)} />
+            </Field>
+            <Field label="Highlights">
+              <Slider value={params.highlights} min={-100} max={100} onChange={(v) => updateParam("highlights", v)} />
+            </Field>
+            <Field label="Shadows">
+              <Slider value={params.shadows} min={-100} max={100} onChange={(v) => updateParam("shadows", v)} />
+            </Field>
+            <Field label="Whites">
+              <Slider value={params.whites} min={-100} max={100} onChange={(v) => updateParam("whites", v)} />
+            </Field>
+            <Field label="Blacks">
+              <Slider value={params.blacks} min={-100} max={100} onChange={(v) => updateParam("blacks", v)} />
+            </Field>
+            <Field label="Vibrance" icon={<PaletteIcon size={13} />}>
+              <Slider value={params.vibrance} min={-100} max={100} onChange={(v) => updateParam("vibrance", v)} />
+            </Field>
+            <Field label="Saturation" icon={<PaletteIcon size={13} />}>
+              <Slider value={params.saturation} min={-100} max={100} onChange={(v) => updateParam("saturation", v)} />
+            </Field>
+          </div>
 
-        <div className="rounded-[10px] bg-white/[0.03] p-3">
-          <p className="mb-2 text-[12px] font-medium text-[var(--text-muted)]">Chia tông màu (Split toning)</p>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-4 rounded-[10px] bg-white/[0.03] p-3">
+            <p className="text-[12px] font-medium text-[var(--text-muted)]">Chia tông màu (Split toning)</p>
             <Field label="Tông bóng tối (hue)">
               <Slider value={params.split_shadow_hue} min={0} max={360} onChange={(v) => updateParam("split_shadow_hue", v)} suffix="°" />
             </Field>
@@ -397,69 +472,23 @@ export function PhotoPanel() {
               <Slider value={params.split_balance} min={-100} max={100} onChange={(v) => updateParam("split_balance", v)} />
             </Field>
           </div>
-        </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <Field label="Hạt phim (Grain)">
-            <Slider value={params.grain} min={0} max={100} onChange={(v) => updateParam("grain", v)} />
-          </Field>
-          <Field label="Vignette">
-            <Slider value={params.vignette} min={0} max={100} onChange={(v) => updateParam("vignette", v)} />
-          </Field>
-          <Field label="Fade (đen mờ)">
-            <Slider value={params.fade} min={0} max={100} onChange={(v) => updateParam("fade", v)} />
-          </Field>
-        </div>
-
-        <Field label="Cường độ tổng" icon={<GaugeIcon size={13} />} hint="Pha trộn giữa ảnh gốc và ảnh đã chỉnh">
-          <Slider value={params.intensity} min={0} max={100} onChange={(v) => updateParam("intensity", v)} suffix="%" />
-        </Field>
-      </div>
-
-      <div className="panel flex flex-col gap-3 p-4">
-        <Field label="Thư mục lưu" icon={<FolderOpenIcon size={13} />}>
-          <div className="flex items-center gap-2">
-            <IconButton
-              icon={<FolderOpenIcon size={15} />}
-              tooltip="Chọn thư mục lưu"
-              onClick={chooseOutputDir}
-            />
-            <span className="min-w-0 flex-1 truncate text-[11.5px] text-[var(--text-faint)]">
-              {outputDir ?? "Mặc định: cùng thư mục với ảnh gốc"}
-            </span>
+          <div className="flex flex-col gap-4">
+            <Field label="Hạt phim (Grain)">
+              <Slider value={params.grain} min={0} max={100} onChange={(v) => updateParam("grain", v)} />
+            </Field>
+            <Field label="Vignette">
+              <Slider value={params.vignette} min={0} max={100} onChange={(v) => updateParam("vignette", v)} />
+            </Field>
+            <Field label="Fade (đen mờ)">
+              <Slider value={params.fade} min={0} max={100} onChange={(v) => updateParam("fade", v)} />
+            </Field>
           </div>
-        </Field>
 
-        <div className="flex items-center justify-between">
-          <div className="text-[12.5px] text-[var(--text-muted)]">
-            {pending.length > 0 && <Badge tone="accent">{pending.length} ảnh đã chọn</Badge>}
-          </div>
-          <Button
-            variant="accent"
-            icon={<QueueIcon size={14} />}
-            disabled={!pending.length || applying}
-            onClick={applyToAll}
-          >
-            {applying ? "Đang xử lý…" : "Áp dụng & Xuất ảnh"}
-          </Button>
+          <Field label="Cường độ tổng" icon={<GaugeIcon size={13} />} hint="Pha trộn giữa ảnh gốc và ảnh đã chỉnh">
+            <Slider value={params.intensity} min={0} max={100} onChange={(v) => updateParam("intensity", v)} suffix="%" />
+          </Field>
         </div>
-
-        {queue.length > 0 && (
-          <div className="flex flex-col gap-1.5 border-t border-[var(--border)] pt-3">
-            {queue.map((item) => (
-              <div key={item.id} className="flex items-center gap-2 text-[12.5px]">
-                {item.status === "running" && <SpinnerIcon size={14} className="text-[var(--accent-strong)]" />}
-                {item.status === "queued" && <span className="h-3.5 w-3.5 rounded-full bg-white/10" />}
-                {item.status === "done" && <CheckCircleIcon size={14} className="text-[var(--success)]" />}
-                {item.status === "error" && <AlertIcon size={14} className="text-[var(--danger)]" />}
-                <span className="flex-1 truncate text-[var(--text-muted)]">{item.inputName}</span>
-                {item.status === "error" && (
-                  <span className="truncate text-[11px] text-[var(--danger)]">{item.errorMessage}</span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

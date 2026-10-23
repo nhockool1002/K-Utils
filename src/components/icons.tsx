@@ -235,6 +235,19 @@ export const UploadIcon = ({ size, className }: IconProps) => (
   </svg>
 );
 
+export const PanelRightIcon = ({ size, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <rect x="3" y="4" width="18" height="16" rx="2.5" />
+    <path d="M15 4v16" />
+  </svg>
+);
+
+export const CheckIcon = ({ size, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <path d="M5 12.5l4.5 4.5L19 7" />
+  </svg>
+);
+
 export const FlipVerticalIcon = ({ size, className }: IconProps) => (
   <svg {...base(size)} className={className}>
     <path d="M3 12h18" />
