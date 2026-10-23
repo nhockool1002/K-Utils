@@ -17,6 +17,7 @@ import {
   PaletteIcon,
   PanelRightIcon,
   CheckIcon,
+  ExpandIcon,
 } from "./icons";
 import {
   pickImageFiles,
@@ -83,6 +84,8 @@ export function PhotoPanel() {
   const [gradedPreview, setGradedPreview] = useState<string | null>(null);
   const [gradedLoading, setGradedLoading] = useState(false);
   const previewRequestId = useRef(0);
+  const [split, setSplit] = useState(50);
+  const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
   const [queue, setQueue] = useState<PhotoQueueItem[]>([]);
   const [applying, setApplying] = useState(false);
@@ -297,12 +300,51 @@ export function PhotoPanel() {
         )}
 
         {selectedPath && (
-          <div className="panel p-3">
+          <div className="panel relative p-3">
             <BeforeAfterSlider
               beforeSrc={beforeSrc ?? ""}
               afterSrc={gradedPreview}
               afterLoading={gradedLoading}
+              split={split}
+              onSplitChange={setSplit}
             />
+            <span className="absolute bottom-5 right-5">
+              <IconButton
+                icon={<ExpandIcon size={14} />}
+                tooltip="Xem toàn màn hình"
+                onClick={() => setFullscreenOpen(true)}
+              />
+            </span>
+          </div>
+        )}
+
+        {fullscreenOpen && selectedPath && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-8"
+            onClick={() => setFullscreenOpen(false)}
+          >
+            <div
+              className="modal-surface fade-in relative w-full max-w-[1200px] p-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span className="absolute right-3 top-3 z-10">
+                <IconButton
+                  size="sm"
+                  variant="ghost"
+                  icon={<XIcon size={15} />}
+                  tooltip="Đóng"
+                  onClick={() => setFullscreenOpen(false)}
+                />
+              </span>
+              <BeforeAfterSlider
+                beforeSrc={beforeSrc ?? ""}
+                afterSrc={gradedPreview}
+                afterLoading={gradedLoading}
+                split={split}
+                onSplitChange={setSplit}
+                className="mx-auto h-[82vh] w-auto max-w-[90vw]"
+              />
+            </div>
           </div>
         )}
 

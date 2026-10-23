@@ -1,25 +1,41 @@
 import { useRef, useState, useCallback } from "react";
+import clsx from "clsx";
 
 export function BeforeAfterSlider({
   beforeSrc,
   afterSrc,
   afterLoading,
+  split: controlledSplit,
+  onSplitChange,
+  className,
 }: {
   beforeSrc: string;
   afterSrc: string | null;
   afterLoading: boolean;
+  /** Pass to share the divider position with another instance (e.g. a
+   * fullscreen modal opened from a smaller card). Omit for a self-contained
+   * slider with its own internal position. */
+  split?: number;
+  onSplitChange?: (split: number) => void;
+  /** Overrides sizing (default caps the card to a sensible preview size). */
+  className?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [split, setSplit] = useState(50);
+  const [internalSplit, setInternalSplit] = useState(50);
+  const split = controlledSplit ?? internalSplit;
+  const setSplit = onSplitChange ?? setInternalSplit;
   const dragging = useRef(false);
 
-  const updateFromClientX = useCallback((clientX: number) => {
-    const el = containerRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const pct = ((clientX - rect.left) / rect.width) * 100;
-    setSplit(Math.min(100, Math.max(0, pct)));
-  }, []);
+  const updateFromClientX = useCallback(
+    (clientX: number) => {
+      const el = containerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const pct = ((clientX - rect.left) / rect.width) * 100;
+      setSplit(Math.min(100, Math.max(0, pct)));
+    },
+    [setSplit],
+  );
 
   const onPointerDown = (e: React.PointerEvent) => {
     dragging.current = true;
@@ -40,7 +56,10 @@ export function BeforeAfterSlider({
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
-      className="relative aspect-[4/3] w-full select-none overflow-hidden rounded-[10px] bg-black/40 cursor-ew-resize"
+      className={clsx(
+        "relative mx-auto select-none overflow-hidden rounded-[10px] bg-black/40 cursor-ew-resize",
+        className ?? "aspect-[4/3] w-full max-w-[480px]",
+      )}
     >
       <img
         src={beforeSrc}
