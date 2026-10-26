@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { DropZone } from "./DropZone";
 import { PreviewModal } from "./PreviewModal";
+import { PresetGrid } from "./PresetGrid";
 import {
   Field,
   Select,
@@ -28,6 +29,7 @@ import {
   QueueIcon,
   RotateIcon,
   CropIcon,
+  WandIcon,
 } from "./icons";
 import {
   pickVideoFiles,
@@ -38,6 +40,8 @@ import {
   pickOutputDir,
   previewVideoFrame,
 } from "../lib/api";
+import { listPhotoPresets } from "../lib/photoApi";
+import { NEUTRAL_GRADING_PARAMS } from "../lib/grading";
 import {
   ENCODER_OPTIONS,
   RESOLUTION_OPTIONS,
@@ -57,6 +61,8 @@ import type {
   SubtitleMode,
   CropAspect,
   RotateDeg,
+  PhotoFilterParams,
+  PhotoPreset,
 } from "../types";
 import { useQueueStore } from "../store/queue";
 
@@ -78,6 +84,7 @@ function buildSummary(options: VideoJobOptions): string {
   }
   if (options.subtitle_mode === "soft") parts.push("Phụ đề mềm");
   if (options.subtitle_mode === "hard") parts.push("Phụ đề cứng");
+  if (options.grading) parts.push("Chỉnh màu");
   if (options.mute_audio) parts.push("Tắt âm thanh");
   parts.push(options.compress ? "Nén video" : "Giữ chất lượng gốc");
   return parts.join(" · ");
@@ -98,6 +105,12 @@ export function VideoPanel() {
   const [outlineColor, setOutlineColor] = useState("#000000");
   const [position, setPosition] = useState<"bottom" | "top">("bottom");
 
+  const [gradingEnabled, setGradingEnabled] = useState(false);
+  const [gradingParams, setGradingParams] = useState<PhotoFilterParams>(NEUTRAL_GRADING_PARAMS);
+  const [gradingPresets, setGradingPresets] = useState<PhotoPreset[]>([]);
+  const [gradingCategory, setGradingCategory] = useState("Tất cả");
+  const [gradingPresetId, setGradingPresetId] = useState<string | null>(null);
+
   const [compress, setCompress] = useState(true);
   const [encoder, setEncoder] = useState<EncoderId>("h264_videotoolbox");
   const [resolution, setResolution] = useState("source");
@@ -115,6 +128,15 @@ export function VideoPanel() {
   const previewRequestId = useRef(0);
 
   const needsSubtitle = subtitleMode !== "none";
+
+  useEffect(() => {
+    listPhotoPresets().then(setGradingPresets).catch(() => {});
+  }, []);
+
+  const applyGradingPreset = (preset: PhotoPreset) => {
+    setGradingParams(preset.params);
+    setGradingPresetId(preset.id);
+  };
 
   const addFiles = (paths: string[]) => {
     setPending((prev) => {
@@ -165,6 +187,7 @@ export function VideoPanel() {
     resolution: resolution === "source" ? null : resolution,
     audio_bitrate: audioBitrate,
     mute_audio: muteAudio,
+    grading: gradingEnabled ? gradingParams : null,
   });
 
   const runPreview = async (path: string, subtitlePath: string | null) => {
@@ -225,6 +248,8 @@ export function VideoPanel() {
     position,
     compress,
     resolution,
+    gradingEnabled,
+    gradingParams,
   ]);
 
   const readyCount = needsSubtitle
@@ -405,6 +430,53 @@ export function VideoPanel() {
         <Field label="Tốc độ phát" icon={<GaugeIcon size={13} />} hint="0.25x (chậm) – 4x (nhanh)">
           <Slider value={speed} min={0.25} max={4} step={0.05} onChange={setSpeed} suffix="x" />
         </Field>
+      </div>
+
+      <div className="panel flex flex-col gap-3 p-4">
+        <Toggle
+          checked={gradingEnabled}
+          onChange={setGradingEnabled}
+          label="Chỉnh màu (Blend)"
+          hint="Áp bộ lọc màu — phim nhựa, vintage, cổ điển… — giống tab Chỉnh ảnh"
+        />
+
+        {gradingEnabled && (
+          <div className="flex flex-col gap-3 rounded-[10px] bg-white/[0.03] p-3">
+            <div className="flex items-center justify-end">
+              <Button
+                variant="ghost"
+                icon={<WandIcon size={13} />}
+                onClick={() => {
+                  setGradingParams(NEUTRAL_GRADING_PARAMS);
+                  setGradingPresetId(null);
+                }}
+              >
+                Đặt lại
+              </Button>
+            </div>
+            <PresetGrid
+              presets={gradingPresets}
+              activeCategory={gradingCategory}
+              onCategoryChange={setGradingCategory}
+              selectedId={gradingPresetId}
+              onSelect={applyGradingPreset}
+              maxHeight={180}
+            />
+            <Field
+              label="Cường độ"
+              icon={<GaugeIcon size={13} />}
+              hint="Pha trộn giữa video gốc và bộ lọc màu"
+            >
+              <Slider
+                value={gradingParams.intensity}
+                min={0}
+                max={100}
+                onChange={(v) => setGradingParams((p) => ({ ...p, intensity: v }))}
+                suffix="%"
+              />
+            </Field>
+          </div>
+        )}
       </div>
 
       <div className="panel flex flex-col gap-4 p-4">

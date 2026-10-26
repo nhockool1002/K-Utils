@@ -29,6 +29,9 @@ export interface VideoJobOptions {
   resolution: string | null;
   audio_bitrate: string;
   mute_audio: boolean;
+  /** Optional color-grading "look" (same engine as the Chỉnh ảnh tab).
+   * `null` disables grading entirely. */
+  grading: PhotoFilterParams | null;
 }
 
 export interface MediaInfo {

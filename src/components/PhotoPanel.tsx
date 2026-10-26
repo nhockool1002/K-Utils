@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { DropZone } from "./DropZone";
 import { BeforeAfterSlider } from "./BeforeAfterSlider";
+import { PresetGrid } from "./PresetGrid";
 import { Field, Slider, Button, IconButton, Badge } from "./ui";
 import {
   ImageIcon,
@@ -16,7 +17,6 @@ import {
   GaugeIcon,
   PaletteIcon,
   PanelRightIcon,
-  CheckIcon,
   ExpandIcon,
 } from "./icons";
 import {
@@ -28,6 +28,7 @@ import {
   parseLightroomPreset,
 } from "../lib/photoApi";
 import { baseName, stripExt, extOf, dirName, pickOutputDir } from "../lib/api";
+import { NEUTRAL_GRADING_PARAMS } from "../lib/grading";
 import type {
   PhotoFilterParams,
   PhotoPreset,
@@ -35,28 +36,7 @@ import type {
 } from "../types";
 
 const IMAGE_EXTS = ["jpg", "jpeg", "png", "heic", "heif"];
-
-const NEUTRAL_PARAMS: PhotoFilterParams = {
-  temperature: 0,
-  tint: 0,
-  exposure: 0,
-  contrast: 0,
-  highlights: 0,
-  shadows: 0,
-  whites: 0,
-  blacks: 0,
-  vibrance: 0,
-  saturation: 0,
-  split_shadow_hue: 220,
-  split_shadow_sat: 0,
-  split_highlight_hue: 40,
-  split_highlight_sat: 0,
-  split_balance: 0,
-  grain: 0,
-  vignette: 0,
-  fade: 0,
-  intensity: 100,
-};
+const NEUTRAL_PARAMS = NEUTRAL_GRADING_PARAMS;
 
 interface PendingImage {
   path: string;
@@ -94,19 +74,6 @@ export function PhotoPanel() {
   useEffect(() => {
     listPhotoPresets().then(setPresets).catch(() => {});
   }, []);
-
-  const categories = useMemo(() => {
-    const set = new Set(presets.map((p) => p.category));
-    return ["Tất cả", ...Array.from(set)];
-  }, [presets]);
-
-  const visiblePresets = useMemo(
-    () =>
-      activeCategory === "Tất cả"
-        ? presets
-        : presets.filter((p) => p.category === activeCategory),
-    [presets, activeCategory],
-  );
 
   const addFiles = (paths: string[]) => {
     setPending((prev) => {
@@ -355,51 +322,17 @@ export function PhotoPanel() {
               Nạp Lightroom (.xmp)
             </Button>
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setActiveCategory(cat)}
-                className={`rounded-full px-2.5 py-1 text-[11.5px] font-medium cursor-pointer ${
-                  activeCategory === cat
-                    ? "bg-[var(--accent)] text-white"
-                    : "bg-white/[0.05] text-[var(--text-muted)] hover:bg-white/[0.09]"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
           {activePresetId === "lightroom" && (
             <Badge tone="accent">Đang dùng: Tuỳ chỉnh (từ Lightroom)</Badge>
           )}
-          <div className="grid max-h-[320px] grid-cols-[repeat(auto-fill,minmax(118px,1fr))] gap-2 overflow-y-auto pr-1">
-            {visiblePresets.map((preset) => {
-              const selected = activePresetId === preset.id;
-              return (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() => applyPreset(preset)}
-                  className={clsx(
-                    "relative flex flex-col items-center justify-center gap-0.5 rounded-[10px] border px-2 py-3 text-center text-[11.5px] font-medium leading-tight cursor-pointer transition-colors",
-                    selected
-                      ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-strong)]"
-                      : "border-[var(--border)] bg-white/[0.03] text-[var(--text-muted)] hover:bg-white/[0.07] hover:text-[var(--text)]",
-                  )}
-                >
-                  {selected && (
-                    <CheckIcon
-                      size={11}
-                      className="absolute right-1.5 top-1.5 text-[var(--accent-strong)]"
-                    />
-                  )}
-                  {preset.name}
-                </button>
-              );
-            })}
-          </div>
+          <PresetGrid
+            presets={presets}
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+            selectedId={activePresetId}
+            onSelect={applyPreset}
+            maxHeight={320}
+          />
         </div>
 
         <div className="panel flex flex-col gap-3 p-4">

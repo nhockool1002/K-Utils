@@ -265,24 +265,63 @@ fn build_noise(amount: f64) -> Option<String> {
     Some(format!("noise=alls={strength}:allf=t+u"))
 }
 
+/// The grading-only filter steps (white balance, tone curve, grain,
+/// vignette) in application order, with no scale/blend wrapping around
+/// them. Shared by the photo export path above and the video job pipeline's
+/// optional "Chỉnh màu" stage (see `ffmpeg.rs`).
+pub fn grading_filter_chain(params: &PhotoFilterParams) -> Vec<String> {
+    let mut chain: Vec<String> = Vec::new();
+    chain.push(build_color_balance(params));
+    chain.push(build_eq(params));
+    if let Some(c) = build_curves(params) {
+        chain.push(c);
+    }
+    if let Some(n) = build_noise(params.grain) {
+        chain.push(n);
+    }
+    if let Some(v) = build_vignette(params.vignette) {
+        chain.push(v);
+    }
+    chain
+}
+
+/// Scales every magnitude-style field by `intensity/100` (hue fields, which
+/// are a rotation rather than a magnitude, and `intensity` itself are left
+/// alone) and returns a full-strength copy. The video pipeline uses this
+/// instead of photo export's split+blend trick: video jobs build a single
+/// plain `-vf` chain (no `-filter_complex`), which keeps the existing
+/// subtitle/audio `-map` logic untouched.
+pub fn scale_params_by_intensity(params: &PhotoFilterParams) -> PhotoFilterParams {
+    let f = (params.intensity / 100.0).clamp(0.0, 1.0);
+    PhotoFilterParams {
+        temperature: params.temperature * f,
+        tint: params.tint * f,
+        exposure: params.exposure * f,
+        contrast: params.contrast * f,
+        highlights: params.highlights * f,
+        shadows: params.shadows * f,
+        whites: params.whites * f,
+        blacks: params.blacks * f,
+        vibrance: params.vibrance * f,
+        saturation: params.saturation * f,
+        split_shadow_hue: params.split_shadow_hue,
+        split_shadow_sat: params.split_shadow_sat * f,
+        split_highlight_hue: params.split_highlight_hue,
+        split_highlight_sat: params.split_highlight_sat * f,
+        split_balance: params.split_balance,
+        grain: params.grain * f,
+        vignette: params.vignette * f,
+        fade: params.fade * f,
+        intensity: 100.0,
+    }
+}
+
 /// Builds the ffmpeg argument fragment (either `-vf <chain>` or
 /// `-filter_complex ... -map [outv]`) for one photo. `max_width` downsizes
 /// the frame first (used for the fast before/after preview); pass `None` to
 /// render at full source resolution (used for the real export).
 fn build_photo_filter(params: &PhotoFilterParams, max_width: Option<u32>) -> Vec<String> {
-    let mut grading_chain: Vec<String> = Vec::new();
-    grading_chain.push(build_color_balance(params));
-    grading_chain.push(build_eq(params));
-    if let Some(c) = build_curves(params) {
-        grading_chain.push(c);
-    }
-    if let Some(n) = build_noise(params.grain) {
-        grading_chain.push(n);
-    }
-    if let Some(v) = build_vignette(params.vignette) {
-        grading_chain.push(v);
-    }
-    let grading = grading_chain.join(",");
+    let grading = grading_filter_chain(params).join(",");
 
     let scale_filter = max_width.map(|w| format!("scale='min(iw,{w})':-2"));
 

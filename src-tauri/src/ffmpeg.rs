@@ -1,3 +1,4 @@
+use crate::photo::{self, PhotoFilterParams};
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager};
@@ -68,6 +69,10 @@ pub struct VideoJobOptions {
     pub resolution: Option<String>,
     pub audio_bitrate: String,
     pub mute_audio: bool,
+    /// Optional color-grading "look" (same engine as the Photo tab) applied
+    /// right after geometry transforms and before any subtitle burn-in, so
+    /// burned-in subtitle text stays crisp and ungraded.
+    pub grading: Option<PhotoFilterParams>,
 }
 
 /// Escapes a filesystem path for safe embedding inside an ffmpeg filtergraph
@@ -235,6 +240,10 @@ fn build_transform_chain(opts: &VideoJobOptions) -> Vec<String> {
         if let Some(sf) = scale_filter(&opts.resolution) {
             parts.push(sf);
         }
+    }
+    if let Some(g) = &opts.grading {
+        let scaled = photo::scale_params_by_intensity(g);
+        parts.extend(photo::grading_filter_chain(&scaled));
     }
     parts
 }
