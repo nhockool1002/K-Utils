@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Sidebar, type View } from "./components/Sidebar";
 import { VideoPanel } from "./components/VideoPanel";
+import { BlendVideoPanel } from "./components/BlendVideoPanel";
 import { PhotoPanel } from "./components/PhotoPanel";
+import { ConvertPanel } from "./components/ConvertPanel";
 import { QueueView } from "./components/QueueView";
 import { LogView } from "./components/LogView";
 import { onJobProgress, onJobDone, onJobError, onAppLog } from "./lib/api";
@@ -58,7 +60,9 @@ export default function App() {
       <Sidebar view={view} onChange={setView} />
       <main className="min-w-0 flex-1">
         {view === "video" && <VideoPanel />}
+        {view === "blend_video" && <BlendVideoPanel />}
         {view === "photo" && <PhotoPanel />}
+        {view === "convert" && <ConvertPanel />}
         {view === "queue" && <QueueView />}
         {view === "logs" && <LogView />}
       </main>

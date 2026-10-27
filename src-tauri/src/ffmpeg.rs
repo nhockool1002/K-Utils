@@ -610,6 +610,7 @@ pub async fn preview_video(
     input: String,
     subtitle: Option<String>,
     options: VideoJobOptions,
+    seek_seconds: Option<f64>,
 ) -> Result<String, String> {
     let info = probe_media(&app, &input).await?;
 
@@ -621,11 +622,14 @@ pub async fn preview_video(
         }
     }
 
-    let seek = if info.duration > 2.0 {
+    let default_seek = if info.duration > 2.0 {
         (info.duration * 0.15).max(1.0)
     } else {
         (info.duration / 2.0).max(0.0)
     };
+    let seek = seek_seconds
+        .map(|s| s.clamp(0.0, info.duration.max(0.0)))
+        .unwrap_or(default_seek);
 
     // Write the preview frame to a temp file instead of piping it through
     // stdout: tauri-plugin-shell's `.output()` reconstructs stdout from its

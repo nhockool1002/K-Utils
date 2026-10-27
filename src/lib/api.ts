@@ -80,8 +80,14 @@ export async function previewVideoFrame(
   input: string,
   subtitle: string | null,
   options: VideoJobOptions,
+  seekSeconds?: number,
 ): Promise<string> {
-  return invoke<string>("preview_video_frame", { input, subtitle, options });
+  return invoke<string>("preview_video_frame", {
+    input,
+    subtitle,
+    options,
+    seekSeconds: seekSeconds ?? null,
+  });
 }
 
 export async function getLogs(): Promise<LogEntry[]> {

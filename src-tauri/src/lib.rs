@@ -1,4 +1,5 @@
 mod commands;
+mod convert;
 mod ffmpeg;
 mod photo;
 mod state;
@@ -21,6 +22,7 @@ pub fn run() {
             commands::preview_photo,
             commands::apply_photo_job,
             commands::parse_lightroom_preset,
+            commands::convert_image,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

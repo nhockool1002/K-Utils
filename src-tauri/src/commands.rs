@@ -1,3 +1,4 @@
+use crate::convert;
 use crate::ffmpeg::{self, MediaInfo, VideoJobOptions};
 use crate::photo::{self, PhotoFilterParams, PhotoPreset};
 use crate::state::{AppState, LogEntry};
@@ -28,8 +29,9 @@ pub async fn preview_video_frame(
     input: String,
     subtitle: Option<String>,
     options: VideoJobOptions,
+    seek_seconds: Option<f64>,
 ) -> Result<String, String> {
-    ffmpeg::preview_video(app, input, subtitle, options).await
+    ffmpeg::preview_video(app, input, subtitle, options, seek_seconds).await
 }
 
 #[tauri::command]
@@ -91,4 +93,13 @@ pub async fn apply_photo_job(
 #[tauri::command]
 pub async fn parse_lightroom_preset(path: String) -> Result<PhotoFilterParams, String> {
     photo::parse_lightroom_preset(path).await
+}
+
+#[tauri::command]
+pub async fn convert_image(
+    input: String,
+    output: String,
+    quality: Option<u32>,
+) -> Result<String, String> {
+    convert::convert_image(input, output, quality).await
 }

@@ -1,12 +1,14 @@
 import clsx from "clsx";
-import { FilmIcon, ImageIcon, QueueIcon, SparkIcon, TerminalIcon } from "./icons";
+import { FilmIcon, ImageIcon, ConvertIcon, PaletteIcon, QueueIcon, SparkIcon, TerminalIcon } from "./icons";
 import { useQueueStore } from "../store/queue";
 
-export type View = "video" | "photo" | "queue" | "logs";
+export type View = "video" | "blend_video" | "photo" | "convert" | "queue" | "logs";
 
 const NAV: { id: View; label: string; icon: typeof FilmIcon }[] = [
   { id: "video", label: "Xử lý video", icon: FilmIcon },
+  { id: "blend_video", label: "Chỉnh màu video", icon: PaletteIcon },
   { id: "photo", label: "Chỉnh ảnh", icon: ImageIcon },
+  { id: "convert", label: "Đổi định dạng", icon: ConvertIcon },
   { id: "queue", label: "Hàng đợi", icon: QueueIcon },
 ];
 

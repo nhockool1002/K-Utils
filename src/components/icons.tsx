@@ -255,3 +255,12 @@ export const FlipVerticalIcon = ({ size, className }: IconProps) => (
     <path d="M7 16v3l-3-3M10 19v-3M17 16v3l3-3M14 19v-3" />
   </svg>
 );
+
+export const ConvertIcon = ({ size, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <rect x="2.5" y="4" width="8" height="8" rx="1.5" />
+    <rect x="13.5" y="12" width="8" height="8" rx="1.5" />
+    <path d="M10.5 8h4a2 2 0 0 1 2 2v2M13.5 16h-4a2 2 0 0 1-2-2v-2" />
+    <path d="m16.5 10 2 2-2 2M7.5 14l-2 2 2 2" />
+  </svg>
+);

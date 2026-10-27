@@ -93,6 +93,17 @@ export interface PhotoQueueItem {
   errorMessage?: string;
 }
 
+export type ConvertJobStatus = "queued" | "running" | "done" | "error";
+
+export interface ConvertQueueItem {
+  id: string;
+  inputPath: string;
+  inputName: string;
+  outputPath: string;
+  status: ConvertJobStatus;
+  errorMessage?: string;
+}
+
 export interface QueueJob {
   id: string;
   inputPath: string;
